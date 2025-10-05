@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+  // The standard output path is "node_modules/.prisma/client"
+  // but your path is also fine if you've configured it.
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Poll {
+  id        Int      @id @default(autoincrement())
+  question  String
+  options   Option[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("polls")
+}
+
+model Option {
+  id        Int      @id @default(autoincrement())
+  text      String
+  votes     Int      @default(0)
+  poll      Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollId    Int      @map("poll_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("options")
+}

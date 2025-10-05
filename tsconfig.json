@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    /* Base Options */
+    "esModuleInterop": true, // Enables compatibility with older libraries like Express
+    "skipLibCheck": true, // Speeds up compilation
+    "target": "ES2022", // Use modern JavaScript features
+    "allowJs": true, // Allow JavaScript files to be compiled
+    "resolveJsonModule": true, // Allow importing JSON files
+    "moduleDetection": "force", // Treat files as modules
+    "isolatedModules": true, // Ensure files are treated as separate modules
+
+    /* Strictness */
+    "strict": true, // Enforces a wide range of type checking rules for better code quality
+    "noUncheckedIndexedAccess": true, // Adds extra checks for array/object access
+
+    /* If you are using ESM in Node.js */
+    "module": "NodeNext", // Use the modern Node.js module system
+    "moduleResolution": "NodeNext",
+
+    /* Output */
+    "outDir": "dist", // Where the compiled JavaScript will go
+    "rootDir": "src" // Where your source TypeScript files are
+  },
+  "include": ["src/**/*"], // Only compile files inside the 'src' directory
+  "exclude": ["node_modules"] // Ignore the node_modules directory
+}
