@@ -10,7 +10,7 @@ async function createPoll(pollQuestion: string, pollOptions: string[]): Promise<
                     question: pollQuestion
                 }
             })
-            const optionsData = pollOptions.map((option, indx) => {
+            const optionsData = pollOptions.map((option) => {
                 return {
                     text: option,
                     pollId: poll.id
@@ -63,9 +63,9 @@ async function readPoll(pollId: number): Promise<PollWithOptionsMenu | null> {
 }
 
 
-async function updatePoll(optionId: number, pollId: number): Promise<PollWithOptionsMenu | null> {
+async function updatePoll(optionId: number): Promise<PollWithOptionsMenu | null> {
     try {
-        await prisma.option.update({
+        const updatedOption = await prisma.option.update({
             where: {
                 id: optionId
             },
@@ -76,7 +76,7 @@ async function updatePoll(optionId: number, pollId: number): Promise<PollWithOpt
             }
         })
 
-        return readPoll(pollId)
+        return readPoll(updatedOption.pollId)
     }
     catch (error) {
         console.error("Error occurred while updating the poll:", error);
