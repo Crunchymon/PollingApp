@@ -9,10 +9,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String   // This will store the bcrypt hash
+  avatarUrl String?  
+
+  // --- Relationships ---
+  polls     Poll[]   // A list of polls this user has created
+  votes     Vote[]   // A list of votes this user has cast
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
 model Poll {
   id        Int      @id @default(autoincrement())
   question  String
-  options   Option[]
+
+  // --- Relationships ---
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  Int      @map("author_id")
+  options   Option[] // A list of all options for this poll
+  votes     Vote[]   // A list of all "vote locks" for this poll
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -20,13 +43,37 @@ model Poll {
 }
 
 model Option {
-  id        Int      @id @default(autoincrement())
-  text      String
-  votes     Int      @default(0)
-  poll      Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
-  pollId    Int      @map("poll_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id    Int    @id @default(autoincrement())
+  text  String
+  votes Int    @default(0) // The fast, single source of truth for vote counts
+
+  // --- Relationships ---
+  poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollId Int    @map("poll_id")
+  voters Vote[] // A list of the specific votes (and thus users) for this option
 
   @@map("options")
+}
+
+// --- JOIN TABLE ---
+
+// This table's job is to record each unique vote event.
+// It acts as a "lock" to prevent double voting and allows for vote retraction.
+model Vote {
+  id Int @id @default(autoincrement())
+
+  // --- Relationships ---
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   Int    @map("user_id")
+  poll     Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollId   Int    @map("poll_id")
+  option   Option @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  optionId Int    @map("option_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // CRITICAL: This database-level rule makes it impossible for a user
+  // to have more than one entry in this table for the same poll.
+  @@unique([userId, pollId])
+  @@map("votes")
 }
