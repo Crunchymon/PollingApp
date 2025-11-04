@@ -1,16 +1,18 @@
-import { z } from 'zod';
-
-const UserSignUp = z.object({
-    name: z.string()
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.UserLoginSchema = exports.UserSignUp = void 0;
+const zod_1 = require("zod");
+const UserSignUp = zod_1.z.object({
+    name: zod_1.z.string()
         .trim()
         .min(1, 'Name is required')
         .max(100, 'Name must be less than 100 characters'),
-    email: z.string()
+    email: zod_1.z.string()
         .trim()
         .toLowerCase()
         .email('Invalid email address')
         .max(255, 'Email must be less than 255 characters'),
-    password: z.string()
+    password: zod_1.z.string()
         .min(8, 'Password must be at least 8 characters')
         .max(128, 'Password must be less than 128 characters')
         .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
@@ -18,15 +20,14 @@ const UserSignUp = z.object({
         .regex(/[0-9]/, 'Password must contain at least one number')
         .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character')
 });
-
-const UserLoginSchema = z.object({
-    email: z.string()
+exports.UserSignUp = UserSignUp;
+const UserLoginSchema = zod_1.z.object({
+    email: zod_1.z.string()
         .trim()
         .toLowerCase()
         .email('Invalid email address'),
-    password: z.string()
+    password: zod_1.z.string()
         .min(1, 'Password is required')
         .max(128, 'Password must be less than 128 characters')
 });
-
-export { UserSignUp, UserLoginSchema };
+exports.UserLoginSchema = UserLoginSchema;
