@@ -2,6 +2,18 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import logger from './logger';
+import * as jwt from 'jsonwebtoken';
+
+
+// Validate JWT_SECRET on startup
+const JWT_SECRET = (() => {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+        logger.error("FATAL ERROR: JWT_SECRET is not defined in environment variables.");
+        process.exit(1);
+    }
+    return secret;
+})();
 
 const validate = (schema: z.Schema) =>
     (req: Request, res: Response, next: NextFunction) => {
@@ -40,4 +52,33 @@ const authRateLimiter = rateLimit({
     legacyHeaders: false,
 });
 
-export { validate, errorHandler, authRateLimiter };
+
+
+function authenticate(req: Request, res: Response, next: NextFunction) {
+    try {
+        const { authorization } = req.headers;
+        
+        if (!authorization) {
+            return res.status(401).json({ message: "Authorization header was not found" });
+        }
+
+        const [type, token] = authorization.split(" ");
+
+        if (type !== "Bearer" || !token) {
+            return res.status(401).json({ message: "Invalid authorization format. Expected: Bearer <token>" });
+        }
+
+        const payload = jwt.verify(token, JWT_SECRET);
+        
+        if (typeof payload === 'string') {
+            return res.status(401).json({ message: "Invalid token format" });
+        }
+
+        req.payload = payload as CustomJwtPayload;
+        next();
+    } catch (error) {
+        res.status(401).json({ message: "You are not authorised to access this page" });
+    }
+}
+
+export { validate, errorHandler, authRateLimiter , authenticate};

@@ -6,28 +6,41 @@ enum LogLevel {
     INFO = 'INFO',
     DEBUG = 'DEBUG'
 }
+interface SerializedError {
+    name: string;
+    message: string;
+    stack?: string;
+}
 
 interface LogEntry {
     timestamp: string;
     level: LogLevel;
     message: string;
-    error?: Error
+    error?: SerializedError;
+    caughtValue?: unknown;
     metadata?: Record<string, unknown>;
 }
 
-function formatLog(level: LogLevel, message: string, error?: Error, metadata?: Record<string, unknown>): string {
+function formatLog(level: LogLevel, message: string, error?: unknown, metadata?: Record<string, unknown>): string {
     const entry: LogEntry = {
         timestamp: new Date().toISOString(),
         level,
         message,
-        ...(error && { error: { name :error.name ,message: error.message, stack: error.stack } }),
         ...(metadata && { metadata })
     };
+
+    if (error instanceof Error) {
+        // It's a real Error, serialize it
+        entry.error = { name: error.name, message: error.message, stack: error.stack };
+    } else if (error) {
+        // It's not an Error, but it's something. Log it.
+        entry.caughtValue = error;
+    }
     return JSON.stringify(entry);
 }
 
 const logger = {
-    error: (message: string, error?: Error, metadata?: Record<string, unknown>) => {
+    error: (message: string, error?: unknown, metadata?: Record<string, unknown>) => {
         console.error(formatLog(LogLevel.ERROR, message, error, metadata));
     },
     warn: (message: string, metadata?: Record<string, unknown>) => {

@@ -24,6 +24,7 @@ app.use(cors(corsOptions));
 
 app.use('/api', apiRoutes);
 
+// console.log("hello");
 // 404 handler - must be after all routes
 app.use((req: express.Request, res: express.Response) => {
     res.status(404).json({ message: 'Route not found' });

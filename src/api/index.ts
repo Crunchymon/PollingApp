@@ -1,7 +1,9 @@
 import {Router} from 'express';
-// import {pollRoutes} from './polls/poll.routes'
+import {pollRoutes} from './polls/poll.routes'
 import { authRoutes } from './auth/auth.routes';
 const apiRoutes = Router();
-// apiRoutes.use('/polls' , pollRoutes)
+
+console.log("hello");
+apiRoutes.use('/polls' , pollRoutes)
 apiRoutes.use('/auth' , authRoutes)
 export {apiRoutes}
