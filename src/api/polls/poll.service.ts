@@ -1,4 +1,4 @@
-import { Poll, Prisma } from '@prisma/client';
+import { Poll} from '@prisma/client';
 import { prisma } from '../../utils/prisma'
 
 
@@ -33,11 +33,25 @@ async function createPoll(pollQuestion: string, pollOptions: string[] , id : num
 
 }
 
-type PollWithOptionsMenu = Prisma.PollGetPayload<{
-    include: {
-        options: true
-    }
-}>
+type PollWithOptionsMenu = {
+    id: number;
+    question: string;
+    author: {
+        id: number;
+        name: string;
+        avatarUrl: string | null;
+    };
+    options: {
+        id: number;
+        text: string;
+        votes: number;
+        voters: {
+            id: number;
+            name: string;
+            avatarUrl: string | null;
+        }[];
+    }[];
+}
 
 async function readPoll(pollId: number): Promise<PollWithOptionsMenu | null> {
     try {
@@ -45,8 +59,34 @@ async function readPoll(pollId: number): Promise<PollWithOptionsMenu | null> {
             where: {
                 id: pollId
             },
-            include: {
-                options: true
+            select: {
+                id: true,
+                question: true,
+                author: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatarUrl: true,
+                    }
+                },
+                options: {
+                    select: {
+                        id: true,
+                        text: true,
+                        votes: true,
+                        voters: {
+                            select: {
+                                user: {
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        avatarUrl: true,
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         })
 
@@ -55,7 +95,20 @@ async function readPoll(pollId: number): Promise<PollWithOptionsMenu | null> {
             return null
         }
 
-        return pollWithOptionsMenu;
+        // Transform the response to flatten voters array
+        const transformedPoll: PollWithOptionsMenu = {
+            id: pollWithOptionsMenu.id,
+            question: pollWithOptionsMenu.question,
+            author: pollWithOptionsMenu.author,
+            options: pollWithOptionsMenu.options.map(option => ({
+                id: option.id,
+                text: option.text,
+                votes: option.votes,
+                voters: option.voters.map(vote => vote.user)
+            }))
+        };
+
+        return transformedPoll;
     }
     catch (error) {
         console.error("Error occured while reading the poll", error)
@@ -63,27 +116,76 @@ async function readPoll(pollId: number): Promise<PollWithOptionsMenu | null> {
     }
 }
 
-
-async function updatePoll(optionId: number): Promise<PollWithOptionsMenu | null> {
+async function getMyPolls(id: number): Promise<PollWithOptionsMenu[]> {
     try {
-        const updatedOption = await prisma.option.update({
+        const pollsWithOptionsMenu = await prisma.poll.findMany({
             where: {
-                id: optionId
+                authorId: id
             },
-            data: {
-                votes: {
-                    increment: 1
+            select: {
+                id: true,
+                question: true,
+                author: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatarUrl: true,
+                    }
+                },
+                options: {
+                    select: {
+                        id: true,
+                        text: true,
+                        votes: true,
+                        voters: {
+                            select: {
+                                user: {
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        avatarUrl: true,
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         })
 
-        return readPoll(updatedOption.pollId)
+        return pollsWithOptionsMenu.map(poll => ({
+            id: poll.id,
+            question: poll.question,
+            author: poll.author,
+            options: poll.options.map(option => ({
+                id: option.id,
+                text: option.text,
+                votes: option.votes,
+                voters: option.voters.map(vote => vote.user)
+            }))
+        }));
     }
     catch (error) {
-        console.error("Error occurred while updating the poll:", error);
-        throw new Error("Something went wrong while updating the poll.");
+        console.error("Error occured while reading the poll", error)
+        throw new Error("Somthing went wrong while reading the poll");
     }
-
 }
 
-export {createPoll , readPoll , updatePoll};
+async function deletePoll(userId: number, id: number): Promise<Poll> {
+    try {
+        const deletedPoll = await prisma.poll.delete({
+            where: {
+                id: id,
+                authorId: userId
+            }
+        })
+
+        return deletedPoll;
+    }
+    catch (error) {
+        console.error("Error occurred while deleting the poll", error);
+        throw new Error("Something went wrong while deleting the poll");
+    }
+}
+
+export { createPoll, readPoll, getMyPolls, deletePoll};

@@ -13,9 +13,16 @@ function formatLog(level, message, error, metadata) {
         timestamp: new Date().toISOString(),
         level,
         message,
-        ...(error && { error: { name: error.name, message: error.message, stack: error.stack } }),
         ...(metadata && { metadata })
     };
+    if (error instanceof Error) {
+        // It's a real Error, serialize it
+        entry.error = { name: error.name, message: error.message, stack: error.stack };
+    }
+    else if (error) {
+        // It's not an Error, but it's something. Log it.
+        entry.caughtValue = error;
+    }
     return JSON.stringify(entry);
 }
 const logger = {

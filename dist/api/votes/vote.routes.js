@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.voteRoute = void 0;
+const express_1 = require("express");
+const middleware_1 = require("../../utils/middleware");
+const vote_controller_1 = require("./vote.controller");
+const vote_schema_1 = require("./vote.schema");
+const voteRoute = (0, express_1.Router)();
+exports.voteRoute = voteRoute;
+voteRoute.post('/', (0, middleware_1.validate)(vote_schema_1.createVoteSchema), middleware_1.authenticate, vote_controller_1.handleCreateVotes);
+voteRoute.delete('/poll/:pollId', middleware_1.authenticate, vote_controller_1.handleDeleteVote);

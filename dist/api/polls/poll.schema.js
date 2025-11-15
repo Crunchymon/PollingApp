@@ -1,8 +1,9 @@
 "use strict";
-// import {z} from 'zod';
 Object.defineProperty(exports, "__esModule", { value: true });
-// const createPollSchema = z.object({
-//     pollQuestion : z.string().min(1),
-//     pollOptions: z.string().min(1).array().min(2)
-// });
-// export {createPollSchema};
+exports.createPollSchema = void 0;
+const zod_1 = require("zod");
+const createPollSchema = zod_1.z.object({
+    question: zod_1.z.string().min(1),
+    options: zod_1.z.string().min(1).array().min(2)
+});
+exports.createPollSchema = createPollSchema;

@@ -46,7 +46,7 @@ function errorHandler(
 // Rate limiting for auth endpoints
 const authRateLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // Limit each IP to 5 requests per windowMs
+    max: 15, // Limit each IP to 5 requests per windowMs
     message: 'Too many authentication attempts, please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
@@ -74,7 +74,7 @@ function authenticate(req: Request, res: Response, next: NextFunction) {
             return res.status(401).json({ message: "Invalid token format" });
         }
 
-        req.payload = payload as CustomJwtPayload;
+        req.body.payload = payload as CustomJwtPayload;
         next();
     } catch (error) {
         res.status(401).json({ message: "You are not authorised to access this page" });

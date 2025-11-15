@@ -2,9 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.apiRoutes = void 0;
 const express_1 = require("express");
-// import {pollRoutes} from './polls/poll.routes'
+const poll_routes_1 = require("./polls/poll.routes");
 const auth_routes_1 = require("./auth/auth.routes");
+const user_routes_1 = require("./users/user.routes");
+const vote_routes_1 = require("./votes/vote.routes");
 const apiRoutes = (0, express_1.Router)();
 exports.apiRoutes = apiRoutes;
-// apiRoutes.use('/polls' , pollRoutes)
 apiRoutes.use('/auth', auth_routes_1.authRoutes);
+apiRoutes.use('/users', user_routes_1.userRoutes);
+apiRoutes.use('/polls', poll_routes_1.pollRoutes);
+apiRoutes.use('/votes', vote_routes_1.voteRoute);

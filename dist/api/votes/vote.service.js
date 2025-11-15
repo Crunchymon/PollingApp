@@ -1,9 +1,11 @@
-import { Vote } from '@prisma/client'
-import { prisma } from '../../utils/prisma'
-
-async function createVote(pollId: number, optionId: number, userId: number): Promise<Vote> {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createVote = createVote;
+exports.deleteVote = deleteVote;
+const prisma_1 = require("../../utils/prisma");
+async function createVote(pollId, optionId, userId) {
     try {
-        const voteCreated = await prisma.$transaction(async (tx) => {
+        const voteCreated = await prisma_1.prisma.$transaction(async (tx) => {
             // Verify that the option belongs to the poll
             const option = await tx.option.findFirst({
                 where: {
@@ -11,11 +13,9 @@ async function createVote(pollId: number, optionId: number, userId: number): Pro
                     pollId: pollId
                 }
             });
-
             if (!option) {
                 throw new Error("Option does not belong to this poll");
             }
-
             // Check if user already voted for this poll
             const existingVote = await tx.vote.findFirst({
                 where: {
@@ -23,14 +23,12 @@ async function createVote(pollId: number, optionId: number, userId: number): Pro
                     pollId: pollId
                 }
             });
-
             if (existingVote) {
                 // User already voted, update the vote
                 if (existingVote.optionId === optionId) {
                     // User is voting for the same option, return existing vote
                     return existingVote;
                 }
-
                 // Decrement old option vote count
                 await tx.option.update({
                     where: { id: existingVote.optionId },
@@ -40,7 +38,6 @@ async function createVote(pollId: number, optionId: number, userId: number): Pro
                         }
                     }
                 });
-
                 // Increment new option vote count
                 await tx.option.update({
                     where: { id: optionId },
@@ -50,7 +47,6 @@ async function createVote(pollId: number, optionId: number, userId: number): Pro
                         }
                     }
                 });
-
                 // Update the vote record
                 const updatedVote = await tx.vote.update({
                     where: {
@@ -60,9 +56,9 @@ async function createVote(pollId: number, optionId: number, userId: number): Pro
                         optionId: optionId
                     }
                 });
-
                 return updatedVote;
-            } else {
+            }
+            else {
                 // New vote - increment option vote count and create vote
                 await tx.option.update({
                     where: { id: optionId },
@@ -72,7 +68,6 @@ async function createVote(pollId: number, optionId: number, userId: number): Pro
                         }
                     }
                 });
-
                 const newVote = await tx.vote.create({
                     data: {
                         pollId: pollId,
@@ -80,13 +75,12 @@ async function createVote(pollId: number, optionId: number, userId: number): Pro
                         userId: userId
                     }
                 });
-
                 return newVote;
             }
         });
-
         return voteCreated;
-    } catch (error: any) {
+    }
+    catch (error) {
         console.error("Error creating/updating vote:", error);
         // Preserve the original error message if it's a known error
         if (error.message === "Option does not belong to this poll") {
@@ -95,10 +89,9 @@ async function createVote(pollId: number, optionId: number, userId: number): Pro
         throw new Error("Failed to create or update vote");
     }
 }
-
-async function deleteVote(pollId: number, userId: number): Promise<Vote> {
+async function deleteVote(pollId, userId) {
     try {
-        const deletedVote = await prisma.$transaction(async (tx) => {
+        const deletedVote = await prisma_1.prisma.$transaction(async (tx) => {
             // Find the vote
             const vote = await tx.vote.findFirst({
                 where: {
@@ -106,11 +99,9 @@ async function deleteVote(pollId: number, userId: number): Promise<Vote> {
                     pollId: pollId
                 }
             });
-
             if (!vote) {
                 throw new Error("Vote not found");
             }
-
             // Decrement the option vote count
             await tx.option.update({
                 where: { id: vote.optionId },
@@ -120,19 +111,17 @@ async function deleteVote(pollId: number, userId: number): Promise<Vote> {
                     }
                 }
             });
-
             // Delete the vote record
             const deleted = await tx.vote.delete({
                 where: {
                     id: vote.id
                 }
             });
-
             return deleted;
         });
-
         return deletedVote;
-    } catch (error: any) {
+    }
+    catch (error) {
         console.error("Error deleting vote:", error);
         // Preserve the original error message if it's a known error
         if (error.message === "Vote not found") {
@@ -141,5 +130,3 @@ async function deleteVote(pollId: number, userId: number): Promise<Vote> {
         throw new Error("Failed to delete vote");
     }
 }
-
-export { createVote, deleteVote }

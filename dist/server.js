@@ -22,6 +22,7 @@ const corsOptions = {
 };
 app.use((0, cors_1.default)(corsOptions));
 app.use('/api', api_1.apiRoutes);
+// console.log("hello");
 // 404 handler - must be after all routes
 app.use((req, res) => {
     res.status(404).json({ message: 'Route not found' });

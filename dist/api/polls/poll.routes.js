@@ -1,11 +1,13 @@
 "use strict";
-// import {Router} from 'express';
-// import { handleCreatePoll, handleReadPoll, handleUpdatePoll } from './poll.controller';
-// import { validate } from '../../utils/middleware';
-// import { createPollSchema } from './poll.schema';
 Object.defineProperty(exports, "__esModule", { value: true });
-// const pollRoutes = Router();
-// pollRoutes.post('/' , validate(createPollSchema) ,handleCreatePoll);
-// pollRoutes.get('/:id' , handleReadPoll);
-// pollRoutes.post('/options/:optionId/vote' , handleUpdatePoll);
-// export {pollRoutes}
+exports.pollRoutes = void 0;
+const express_1 = require("express");
+const poll_controller_1 = require("./poll.controller");
+const middleware_1 = require("../../utils/middleware");
+const poll_schema_1 = require("./poll.schema");
+const pollRoutes = (0, express_1.Router)();
+exports.pollRoutes = pollRoutes;
+pollRoutes.post('/', (0, middleware_1.validate)(poll_schema_1.createPollSchema), middleware_1.authenticate, poll_controller_1.handleCreatePoll);
+pollRoutes.get('/', middleware_1.authenticate, poll_controller_1.handleReadMyPoll);
+pollRoutes.get('/:id', poll_controller_1.handleReadPoll);
+pollRoutes.delete('/:id', middleware_1.authenticate, poll_controller_1.handleDeletePoll);
