@@ -5,7 +5,8 @@ import asyncHandler from 'express-async-handler';
 const handleCreatePoll = asyncHandler(async (req: Request, res: Response) => {
     const { question, options, payload} = req.body;
     const newPoll = await createPoll(question, options, payload.id)
-    res.status(201).json(newPoll);
+    const pollData = await readPoll(newPoll.id);
+    res.status(201).json(pollData);
     return;
 })
 const handleReadPoll = asyncHandler(async (req: Request, res: Response) => {

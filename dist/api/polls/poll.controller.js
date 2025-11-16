@@ -9,7 +9,8 @@ const express_async_handler_1 = __importDefault(require("express-async-handler")
 const handleCreatePoll = (0, express_async_handler_1.default)(async (req, res) => {
     const { question, options, payload } = req.body;
     const newPoll = await (0, poll_service_1.createPoll)(question, options, payload.id);
-    res.status(201).json(newPoll);
+    const pollData = await (0, poll_service_1.readPoll)(newPoll.id);
+    res.status(201).json(pollData);
     return;
 });
 exports.handleCreatePoll = handleCreatePoll;
@@ -49,6 +50,6 @@ const handleDeletePoll = (0, express_async_handler_1.default)(async (req, res) =
     const pollId = parseInt(id);
     const userId = payload.id;
     const deletedPoll = await (0, poll_service_1.deletePoll)(userId, pollId);
-    res.status(204).json({ "message": "Poll deleted Succesfully" });
+    res.status(204).json();
 });
 exports.handleDeletePoll = handleDeletePoll;

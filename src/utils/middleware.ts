@@ -46,7 +46,7 @@ function errorHandler(
 // Rate limiting for auth endpoints
 const authRateLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 15, // Limit each IP to 5 requests per windowMs
+    max: 100, // Limit each IP to 5 requests per windowMs
     message: 'Too many authentication attempts, please try again later.',
     standardHeaders: true,
     legacyHeaders: false,

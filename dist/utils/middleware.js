@@ -76,7 +76,7 @@ function errorHandler(error, req, res, next) {
 // Rate limiting for auth endpoints
 const authRateLimiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // Limit each IP to 5 requests per windowMs
+    max: 100, // Limit each IP to 5 requests per windowMs
     message: 'Too many authentication attempts, please try again later.',
     standardHeaders: true,
     legacyHeaders: false,

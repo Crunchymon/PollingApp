@@ -1,5 +1,3 @@
-API Contracts:
-
 Standard Headers & Error Responses
 These are the common responses that can apply to many of your endpoints.
 Standard Request Headers
@@ -152,10 +150,6 @@ Returns a paginated list of polls.
 Access: Authenticated
 Request:
 Headers: Authorization: Bearer <jwt_token>
-Query Params:
-?search=... (string, optional)
-?sortBy=createdAt&order=desc (optional)
-?page=1&limit=10 (optional)
 Responses:
 200 OK (Success):
 JSON
@@ -247,7 +241,7 @@ Responses:
 4. Votes Resource (/api/votes)
 (Using the cleaner /api/votes resource we discussed)
 POST /api/votes
-Access: Authenticated
+Access: Athenticated
 Request:
 Headers: Content-Type: application/json, Authorization: Bearer <jwt_token>
 Body:
@@ -305,3 +299,5 @@ JSON
 401 Unauthorized: (Standard Auth Error)
 4404 Not Found: { "message": "You have not cast a vote on this poll." }
 5D00 Internal Server Error: (Standard Server Error)
+
+
