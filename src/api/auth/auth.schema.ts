@@ -29,4 +29,8 @@ const UserLoginSchema = z.object({
         .max(128, 'Password must be less than 128 characters')
 });
 
-export { UserSignUp, UserLoginSchema };
+const GoogleLoginSchema = z.object({
+    code: z.string().min(1, "Authorization code is required")
+});
+
+export { UserSignUp, UserLoginSchema, GoogleLoginSchema };

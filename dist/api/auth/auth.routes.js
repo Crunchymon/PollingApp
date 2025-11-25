@@ -9,3 +9,4 @@ const authRoutes = (0, express_1.Router)();
 exports.authRoutes = authRoutes;
 authRoutes.post('/signup', middleware_1.authRateLimiter, (0, middleware_1.validate)(auth_schema_1.UserSignUp), auth_controller_1.handleCreateUser);
 authRoutes.post('/login', middleware_1.authRateLimiter, (0, middleware_1.validate)(auth_schema_1.UserLoginSchema), auth_controller_1.handleVerifyUser);
+authRoutes.post('/google', (0, middleware_1.validate)(auth_schema_1.GoogleLoginSchema), auth_controller_1.handleGoogleLogin);

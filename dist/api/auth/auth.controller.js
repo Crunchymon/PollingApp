@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.handleVerifyUser = exports.handleCreateUser = void 0;
+exports.handleGoogleLogin = exports.handleVerifyUser = exports.handleCreateUser = void 0;
 const auth_service_1 = require("./auth.service");
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const bcrypt = __importStar(require("bcrypt"));
@@ -50,6 +50,20 @@ const JWT_SECRET = (() => {
         process.exit(1);
     }
     return secret;
+})();
+// Validate Google Config on startup
+(() => {
+    const missing = [];
+    if (!process.env.GOOGLE_CLIENT_ID)
+        missing.push('GOOGLE_CLIENT_ID');
+    if (!process.env.GOOGLE_CLIENT_SECRET)
+        missing.push('GOOGLE_CLIENT_SECRET');
+    if (!process.env.GOOGLE_REDIRECT_URI)
+        missing.push('GOOGLE_REDIRECT_URI');
+    if (missing.length > 0) {
+        logger_1.default.error(`FATAL ERROR: Missing Google OAuth config: ${missing.join(', ')}`);
+        process.exit(1);
+    }
 })();
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
 // Dummy hash for timing attack prevention (valid bcrypt hash format that will never match)
@@ -107,3 +121,22 @@ const handleVerifyUser = (0, express_async_handler_1.default)(async (req, res) =
     });
 });
 exports.handleVerifyUser = handleVerifyUser;
+const handleGoogleLogin = (0, express_async_handler_1.default)(async (req, res) => {
+    const { code } = req.body;
+    // 1. Verify token and get payload
+    const googleUser = await (0, auth_service_1.verifyGoogleToken)(code);
+    if (!googleUser) {
+        res.status(400).json({ message: "Failed to retrieve user data from Google." });
+        return;
+    }
+    // 2. Find or create user
+    const user = await (0, auth_service_1.findOrCreateGoogleUser)(googleUser);
+    // 3. Generate Token
+    const token = generateToken(user.id);
+    // 4. Send response
+    res.status(200).json({
+        token,
+        user: formatUserResponse(user)
+    });
+});
+exports.handleGoogleLogin = handleGoogleLogin;

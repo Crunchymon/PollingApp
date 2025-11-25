@@ -9,17 +9,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
-  id        Int      @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   name      String
-  email     String   @unique
-  password  String   // This will store the bcrypt hash
-  avatarUrl String?  
+  email     String  @unique
+  password  String? // This will store the bcrypt hash
+  avatarUrl String?
 
   // --- Relationships ---
-  polls     Poll[]   // A list of polls this user has created
-  votes     Vote[]   // A list of votes this user has cast
+  polls Poll[] // A list of polls this user has created
+  votes Vote[] // A list of votes this user has cast
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -27,14 +26,14 @@ model User {
 }
 
 model Poll {
-  id        Int      @id @default(autoincrement())
-  question  String
+  id       Int    @id @default(autoincrement())
+  question String
 
   // --- Relationships ---
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId  Int      @map("author_id")
-  options   Option[] // A list of all options for this poll
-  votes     Vote[]   // A list of all "vote locks" for this poll
+  author   User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId Int      @map("author_id")
+  options  Option[] // A list of all options for this poll
+  votes    Vote[] // A list of all "vote locks" for this poll
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

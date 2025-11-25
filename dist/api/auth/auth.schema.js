@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserLoginSchema = exports.UserSignUp = void 0;
+exports.GoogleLoginSchema = exports.UserLoginSchema = exports.UserSignUp = void 0;
 const zod_1 = require("zod");
 const UserSignUp = zod_1.z.object({
     name: zod_1.z.string()
@@ -31,3 +31,7 @@ const UserLoginSchema = zod_1.z.object({
         .max(128, 'Password must be less than 128 characters')
 });
 exports.UserLoginSchema = UserLoginSchema;
+const GoogleLoginSchema = zod_1.z.object({
+    code: zod_1.z.string().min(1, "Authorization code is required")
+});
+exports.GoogleLoginSchema = GoogleLoginSchema;
