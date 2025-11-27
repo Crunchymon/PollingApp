@@ -25,16 +25,14 @@ Coordinating group decisions — such as picking a meeting time or deciding wher
 
 ## 🏛️ **System Architecture**
 
-Pulse follows a fully decoupled architecture:
-
+Pulse follows a fully decoupled architecture: **Frontend → Backend (API) → Database**
 
 ### **Tech Breakdown**
-- **Frontend:** Next.js (React), TypeScript, TailwindCSS, Shadcn/UI  
-- **Backend:** Node.js, Express.js, TypeScript, Prisma, Zod  
+- **Frontend:** Next.js (React), TypeScript, TailwindCSS, Shadcn/UI, @react-oauth/google
+- **Backend:** Node.js, Express.js, TypeScript, Prisma, Zod, google-auth-library
 - **Database:** MySQL  
-- **Authentication:** JWT + bcrypt  
-- **Hosting:**  
-  - Frontend → Vercel  
+- **Authentication:** JWT + bcrypt + Google OAuth 2.0
+- **Hosting:** - Frontend → Vercel  
   - Backend → Render  
   - Database → PlanetScale / Railway  
 
@@ -43,18 +41,18 @@ Pulse follows a fully decoupled architecture:
 ## ✨ **Key Features**
 
 ### 🔐 **Authentication & Authorization**
-- Email/password signup & login using custom **JWT-based auth**
-- Users can **only delete their own polls**
-- Secure password hashing using **bcrypt**
+- **Google OAuth 2.0:** One-click secure login and signup with Google.
+- **Custom Auth:** Email/password signup & login using custom **JWT-based auth**.
+- **Security:** Secure password hashing using **bcrypt** and protected routes via JWT verification.
 
 ---
 
 ### 🗳️ **Poll Management (CRUD)**
-- **Create**, **read**, and **delete** polls (only by the owner)
+- **Create**, **read**, **update**,and **delete** polls (only by the owner).
 - Users can:
-  - **Vote** on any poll  
-  - **Retract** their vote  
-- Full validation on poll creation & voting (Zod)
+  - **Vote** on any poll.
+  - **Retract** their vote.
+- Full validation on poll creation & voting (Zod).
 
 ---
 
@@ -75,8 +73,8 @@ Supports:
 ---
 
 ### 🔄 **Real-Time Experience (Short Polling)**
-- The poll details page auto-refreshes every few seconds
-- Provides a near real-time view of vote count updates
+- The poll details page auto-refreshes every few seconds.
+- Provides a near real-time view of vote count updates.
 
 ---
 
@@ -84,17 +82,12 @@ Supports:
 | Route | Description |
 |-------|-------------|
 | `/` | Homepage |
-| `/login` | Login |
-| `/signup` | Signup |
+| `/login` | Login (Custom + Google) |
+| `/signup` | Signup (Custom + Google) |
 | `/dashboard` | Manage polls |
 | `/create` | Create a new poll |
 | `/profile` | User profile |
 | `/polls/:id` | Poll details page |
-
----
-
-### 🧩 **Stretch Goal: Google Social Login**
-- Add OAuth2-based “Sign in with Google” for one-click onboarding.
 
 ---
 
@@ -105,7 +98,7 @@ Supports:
 | **Frontend** | Next.js, React, TypeScript, Axios, TailwindCSS, Shadcn/UI |
 | **Backend** | Node.js, Express, TypeScript, Prisma ORM, Zod |
 | **Database** | MySQL |
-| **Auth** | JWT, bcrypt |
+| **Auth** | JWT, bcrypt, **Google OAuth 2.0** |
 | **Hosting** | Vercel (FE), Render (BE), PlanetScale/Railway (DB) |
 
 ---
@@ -117,6 +110,7 @@ Supports:
 |----------|--------|-------------|--------|
 | `/api/auth/signup` | POST | Register a new user | Public |
 | `/api/auth/login` | POST | Login & receive JWT | Public |
+| `/api/auth/google` | POST | **Authenticate via Google** | Public |
 
 ---
 
@@ -124,6 +118,7 @@ Supports:
 | Endpoint | Method | Description | Access |
 |----------|--------|-------------|--------|
 | `/api/users/me` | GET | Get current user profile | Authenticated |
+| `/api/users/me` | PATCH | Update user profile (Name) | Authenticated |
 
 ---
 
@@ -133,6 +128,7 @@ Supports:
 | `/api/polls` | POST | Create a new poll | Authenticated |
 | `/api/polls` | GET | Get user-created polls (with search, sort, pagination) | Authenticated |
 | `/api/polls/:id` | GET | Get poll details | Public |
+| `/api/polls/:id` | PATCH | Edit poll question | Authenticated (Owner Only) |
 | `/api/polls/:id` | DELETE | Delete your own poll | Authenticated (Owner Only) |
 
 ---
@@ -149,6 +145,3 @@ Supports:
 
 Pulse delivers a clean, fast, and efficient way for groups to make decisions with real-time feedback.  
 Its decoupled architecture makes it scalable, maintainable, and ideal for modern applications.
-
----
-

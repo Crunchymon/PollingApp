@@ -1,14 +1,14 @@
-import { Poll} from '@prisma/client';
+import { Poll, Prisma } from '@prisma/client';
 import { prisma } from '../../utils/prisma'
 
 
-async function createPoll(pollQuestion: string, pollOptions: string[] , id : number): Promise<Poll> {
+async function createPoll(pollQuestion: string, pollOptions: string[], id: number): Promise<Poll> {
     try {
         const newPoll = await prisma.$transaction(async (tx) => {
             const poll = await tx.poll.create({
                 data: {
                     question: pollQuestion,
-                    authorId : id
+                    authorId: id
                 }
             })
             const optionsData = pollOptions.map((option) => {
@@ -36,6 +36,7 @@ async function createPoll(pollQuestion: string, pollOptions: string[] , id : num
 type PollWithOptionsMenu = {
     id: number;
     question: string;
+    createdAt : Date;
     author: {
         id: number;
         name: string;
@@ -53,6 +54,8 @@ type PollWithOptionsMenu = {
     }[];
 }
 
+
+
 async function readPoll(pollId: number): Promise<PollWithOptionsMenu | null> {
     try {
         const pollWithOptionsMenu = await prisma.poll.findUnique({
@@ -62,6 +65,7 @@ async function readPoll(pollId: number): Promise<PollWithOptionsMenu | null> {
             select: {
                 id: true,
                 question: true,
+                createdAt : true,
                 author: {
                     select: {
                         id: true,
@@ -98,6 +102,7 @@ async function readPoll(pollId: number): Promise<PollWithOptionsMenu | null> {
         // Transform the response to flatten voters array
         const transformedPoll: PollWithOptionsMenu = {
             id: pollWithOptionsMenu.id,
+            createdAt : pollWithOptionsMenu.createdAt,
             question: pollWithOptionsMenu.question,
             author: pollWithOptionsMenu.author,
             options: pollWithOptionsMenu.options.map(option => ({
@@ -116,54 +121,100 @@ async function readPoll(pollId: number): Promise<PollWithOptionsMenu | null> {
     }
 }
 
-async function getMyPolls(id: number): Promise<PollWithOptionsMenu[]> {
+
+interface getPollsParams {
+    userId: number;
+    search?: string;
+    page?: number;
+    limit?: number;
+    sortBy?: 'createdAt' | 'updatedAt' | 'question';
+    order?: 'asc' | 'desc';
+}
+
+type PollsResponse = {
+    data: PollWithOptionsMenu[],
+    meta: {
+        totalPolls: number;
+        totalPages: number;
+        currentPage: number;
+        limit: number;
+    };
+}
+
+async function getMyPolls({ userId, search, page = 1, limit = 5, sortBy = "createdAt", order = "desc" }: getPollsParams): Promise<PollsResponse> {
     try {
-        const pollsWithOptionsMenu = await prisma.poll.findMany({
-            where: {
-                authorId: id
-            },
-            select: {
-                id: true,
-                question: true,
-                author: {
-                    select: {
-                        id: true,
-                        name: true,
-                        avatarUrl: true,
-                    }
+        // 1. Calculate Pagination logic
+        const skip = (page - 1) * limit;
+
+        // 2. Build the "Where" clause (Filtering)
+        // We always filter by authorId (My Polls). 
+        // If a search term exists, we ALSO filter by the question text.
+        const whereClause: Prisma.PollWhereInput = {
+            authorId: userId,
+            ...(search && {
+                question: {
+                    contains: search, // Search for text INSIDE the question
+                    // mode: 'insensitive' // Optional: if you want case-insensitive search (Postgres only usually, check MySQL support)
+                }
+            })
+        };
+
+        // 3. Run two queries in a transaction: Get Data + Get Total Count
+        const [polls, totalCount] = await prisma.$transaction([
+            prisma.poll.findMany({
+                where: whereClause,
+                orderBy: {
+                    [sortBy]: order // Dynamic sorting
                 },
-                options: {
-                    select: {
-                        id: true,
-                        text: true,
-                        votes: true,
-                        voters: {
-                            select: {
-                                user: {
-                                    select: {
-                                        id: true,
-                                        name: true,
-                                        avatarUrl: true,
+                take: limit, // Limit results
+                skip: skip,  // Skip previous pages
+                include: {
+                    author: {
+                        select: { id: true, name: true, avatarUrl: true } // Only get public fields
+                    },
+                    options: {
+                        include: {
+                            voters: { // Get the votes...
+                                include: {
+                                    user: { // ...and the user who voted
+                                        select: { id: true, name: true, avatarUrl: true }
                                     }
                                 }
                             }
                         }
                     }
                 }
-            }
-        })
+            }),
+            prisma.poll.count({ where: whereClause }) // Count TOTAL matching items for pagination
+        ]);
 
-        return pollsWithOptionsMenu.map(poll => ({
+        // 4. Calculate total pages
+        const totalPages = Math.ceil(totalCount / limit);
+
+        const formattedData: PollWithOptionsMenu[] = polls.map(poll => ({
             id: poll.id,
             question: poll.question,
-            author: poll.author,
+            createdAt: poll.createdAt,
+            author: poll.author, // Matches your type
             options: poll.options.map(option => ({
                 id: option.id,
                 text: option.text,
                 votes: option.votes,
+                // Flatten the structure: Vote -> User becomes just User
                 voters: option.voters.map(vote => vote.user)
             }))
         }));
+        // 5. Return the structured response
+        return {
+            data: formattedData,
+            meta: {
+                totalPolls: totalCount,
+                totalPages: totalPages,
+                currentPage: page,
+                limit: limit
+            }
+        };
+
     }
     catch (error) {
         console.error("Error occured while reading the poll", error)
@@ -188,15 +239,15 @@ async function deletePoll(userId: number, id: number): Promise<Poll> {
     }
 }
 
-async function updatePoll(userId: number , id : number , question : string) : Promise <Poll> {
-     try {
+async function updatePoll(userId: number, id: number, question: string): Promise<Poll> {
+    try {
         const updatedPoll = await prisma.poll.update({
             where: {
                 id: id,
                 authorId: userId
             },
-            data : {
-                question : question
+            data: {
+                question: question
             }
         })
 
@@ -208,4 +259,4 @@ async function updatePoll(userId: number , id : number , question : string) : Pr
     }
 }
 
-export { createPoll, readPoll, getMyPolls, deletePoll , updatePoll};
+export { createPoll, readPoll, getMyPolls, deletePoll, updatePoll };

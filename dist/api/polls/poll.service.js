@@ -42,6 +42,7 @@ async function readPoll(pollId) {
             select: {
                 id: true,
                 question: true,
+                createdAt: true,
                 author: {
                     select: {
                         id: true,
@@ -76,6 +77,7 @@ async function readPoll(pollId) {
         // Transform the response to flatten voters array
         const transformedPoll = {
             id: pollWithOptionsMenu.id,
+            createdAt: pollWithOptionsMenu.createdAt,
             question: pollWithOptionsMenu.question,
             author: pollWithOptionsMenu.author,
             options: pollWithOptionsMenu.options.map(option => ({
@@ -92,53 +94,75 @@ async function readPoll(pollId) {
         throw new Error("Somthing went wrong while reading the poll");
     }
 }
-async function getMyPolls(id) {
+async function getMyPolls({ userId, search, page = 1, limit = 5, sortBy = "createdAt", order = "desc" }) {
     try {
-        const pollsWithOptionsMenu = await prisma_1.prisma.poll.findMany({
-            where: {
-                authorId: id
-            },
-            select: {
-                id: true,
-                question: true,
-                author: {
-                    select: {
-                        id: true,
-                        name: true,
-                        avatarUrl: true,
-                    }
+        // 1. Calculate Pagination logic
+        const skip = (page - 1) * limit;
+        // 2. Build the "Where" clause (Filtering)
+        // We always filter by authorId (My Polls). 
+        // If a search term exists, we ALSO filter by the question text.
+        const whereClause = {
+            authorId: userId,
+            ...(search && {
+                question: {
+                    contains: search, // Search for text INSIDE the question
+                    // mode: 'insensitive' // Optional: if you want case-insensitive search (Postgres only usually, check MySQL support)
+                }
+            })
+        };
+        // 3. Run two queries in a transaction: Get Data + Get Total Count
+        const [polls, totalCount] = await prisma_1.prisma.$transaction([
+            prisma_1.prisma.poll.findMany({
+                where: whereClause,
+                orderBy: {
+                    [sortBy]: order // Dynamic sorting
                 },
-                options: {
-                    select: {
-                        id: true,
-                        text: true,
-                        votes: true,
-                        voters: {
-                            select: {
-                                user: {
-                                    select: {
-                                        id: true,
-                                        name: true,
-                                        avatarUrl: true,
+                take: limit, // Limit results
+                skip: skip, // Skip previous pages
+                include: {
+                    author: {
+                        select: { id: true, name: true, avatarUrl: true } // Only get public fields
+                    },
+                    options: {
+                        include: {
+                            voters: {
+                                include: {
+                                    user: {
+                                        select: { id: true, name: true, avatarUrl: true }
                                     }
                                 }
                             }
                         }
                     }
                 }
-            }
-        });
-        return pollsWithOptionsMenu.map(poll => ({
+            }),
+            prisma_1.prisma.poll.count({ where: whereClause }) // Count TOTAL matching items for pagination
+        ]);
+        // 4. Calculate total pages
+        const totalPages = Math.ceil(totalCount / limit);
+        const formattedData = polls.map(poll => ({
             id: poll.id,
             question: poll.question,
-            author: poll.author,
+            createdAt: poll.createdAt,
+            author: poll.author, // Matches your type
             options: poll.options.map(option => ({
                 id: option.id,
                 text: option.text,
                 votes: option.votes,
+                // Flatten the structure: Vote -> User becomes just User
                 voters: option.voters.map(vote => vote.user)
             }))
         }));
+        // 5. Return the structured response
+        return {
+            data: formattedData,
+            meta: {
+                totalPolls: totalCount,
+                totalPages: totalPages,
+                currentPage: page,
+                limit: limit
+            }
+        };
     }
     catch (error) {
         console.error("Error occured while reading the poll", error);
