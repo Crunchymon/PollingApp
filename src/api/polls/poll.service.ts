@@ -188,4 +188,24 @@ async function deletePoll(userId: number, id: number): Promise<Poll> {
     }
 }
 
-export { createPoll, readPoll, getMyPolls, deletePoll};
+async function updatePoll(userId: number , id : number , question : string) : Promise <Poll> {
+     try {
+        const updatedPoll = await prisma.poll.update({
+            where: {
+                id: id,
+                authorId: userId
+            },
+            data : {
+                question : question
+            }
+        })
+
+        return updatedPoll;
+    }
+    catch (error) {
+        console.error("Error occurred while updating the poll", error);
+        throw new Error("Something went wrong while updating the poll");
+    }
+}
+
+export { createPoll, readPoll, getMyPolls, deletePoll , updatePoll};

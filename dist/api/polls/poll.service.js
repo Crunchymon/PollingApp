@@ -4,6 +4,7 @@ exports.createPoll = createPoll;
 exports.readPoll = readPoll;
 exports.getMyPolls = getMyPolls;
 exports.deletePoll = deletePoll;
+exports.updatePoll = updatePoll;
 const prisma_1 = require("../../utils/prisma");
 async function createPoll(pollQuestion, pollOptions, id) {
     try {
@@ -157,5 +158,23 @@ async function deletePoll(userId, id) {
     catch (error) {
         console.error("Error occurred while deleting the poll", error);
         throw new Error("Something went wrong while deleting the poll");
+    }
+}
+async function updatePoll(userId, id, question) {
+    try {
+        const updatedPoll = await prisma_1.prisma.poll.update({
+            where: {
+                id: id,
+                authorId: userId
+            },
+            data: {
+                question: question
+            }
+        });
+        return updatedPoll;
+    }
+    catch (error) {
+        console.error("Error occurred while updating the poll", error);
+        throw new Error("Something went wrong while updating the poll");
     }
 }

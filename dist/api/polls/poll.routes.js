@@ -11,3 +11,4 @@ pollRoutes.post('/', (0, middleware_1.validate)(poll_schema_1.createPollSchema),
 pollRoutes.get('/', middleware_1.authenticate, poll_controller_1.handleReadMyPoll);
 pollRoutes.get('/:id', poll_controller_1.handleReadPoll);
 pollRoutes.delete('/:id', middleware_1.authenticate, poll_controller_1.handleDeletePoll);
+pollRoutes.patch('/:id', (0, middleware_1.validate)(poll_schema_1.updatePollSchema), middleware_1.authenticate, poll_controller_1.handleUpdatePoll);

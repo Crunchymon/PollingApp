@@ -5,4 +5,8 @@ const createPollSchema = z.object({
     options: z.string().min(1).array().min(2)
 });
 
-export {createPollSchema};
+const updatePollSchema = z.object({
+    question : z.string().min(1)
+})
+
+export {createPollSchema , updatePollSchema};
